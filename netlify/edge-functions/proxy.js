@@ -26,6 +26,18 @@ function redirect(location, status = 302, extraHeaders = {}) {
   return new Response(null, { status, headers: { Location: location, ...extraHeaders } });
 }
 
+// Typed URL, bookmark, new/restored tab: sec-fetch-site is "none"; in-app navigations are "same-origin"
+function isUserInitiatedNavigation(request) {
+  return isDocumentRequest(request) && request.headers.get("sec-fetch-site") === "none";
+}
+
+// Client-side hop so the follow-up request is classified as same-origin rather than user-initiated
+function clientRedirect(location, extraHeaders = {}) {
+  const safe = JSON.stringify(location);
+  const html = `<!DOCTYPE html><meta charset="utf-8"><script>location.replace(${safe})</script>`;
+  return new Response(html, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", ...extraHeaders } });
+}
+
 function buildRequestHeaders(request) {
   const headers = new Headers(request.headers);
   // Drop hop-by-hop / platform headers so the origin sees a clean request
@@ -112,9 +124,14 @@ export default async (request, context) => {
 
       // Page navigations become the active origin and move to the real path so client-side routers work
       if (isDocumentRequest(request)) {
-        return redirect(target.pathname + target.search + target.hash, 302, { "Set-Cookie": originCookie(target.origin) });
+        return clientRedirect(target.pathname + target.search + target.hash, { "Set-Cookie": originCookie(target.origin) });
       }
       return await proxyTo(targetUrl, request);
+    }
+
+    const isHome = url.pathname === "/" || url.pathname === "/index.html";
+    if (isHome && isUserInitiatedNavigation(request)) {
+      return context.next();
     }
 
     const origin = getCookie(request, ORIGIN_COOKIE);
@@ -122,7 +139,7 @@ export default async (request, context) => {
       return await proxyTo(origin + url.pathname + url.search, request);
     }
 
-    if (url.pathname === "/" || url.pathname === "/index.html") {
+    if (isHome) {
       return context.next();
     }
     return redirect(HOME_PATH);
