@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vercel Browser</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #f8fafc; }
+    p { color: #94a3b8; margin-bottom: 28px; font-size: 0.95rem; }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+    input:focus { outline: none; border-color: #3b82f6; }
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #3b82f6;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #2563eb; }
+    .hint {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Vercel Browser</h1>
+    <p>Paste any of your Vercel site URLs. It will open inside this app.</p>
+    
+    <form onsubmit="go(event)">
+      <input 
+        id="url" 
+        type="text" 
+        placeholder="https://your-project.vercel.app" 
+        required 
+        autocomplete="off"
+      />
+      <button type="submit">Open Site</button>
+    </form>
+
+    <div class="hint">
+      Works only for .vercel.app sites
+    </div>
+  </div>
+
+  <script>
+    function go(e) {
+      e.preventDefault();
+      let url = document.getElementById("url").value.trim();
+      if (!url.startsWith("http")) url = "https://" + url;
+      // Go to the proxy route
+      window.location.href = "/proxy/" + encodeURIComponent(url);
+    }
+  </script>
+</body>
+</html>
