@@ -1,13 +1,15 @@
 export default async (request, context) => {
   const url = new URL(request.url);
   
-  // Extract the target URL from /proxy/https%3A%2F%2F...
-  const path = url.pathname.replace("/proxy/", "");
+  // Extract the target URL from /proxy/https%3A%2F%2F... (also tolerates already-decoded paths)
+  const path = url.pathname.replace(/^\/proxy\/?/, "") + url.search;
   let targetUrl = decodeURIComponent(path);
 
   if (!targetUrl.startsWith("http")) {
     targetUrl = "https://" + targetUrl;
   }
+  // Normalize "https:/host" (collapsed by path normalization) back to "https://host"
+  targetUrl = targetUrl.replace(/^(https?:)\/+/, "$1//");
 
   // Security: only allow vercel.app
   const target = new URL(targetUrl);
